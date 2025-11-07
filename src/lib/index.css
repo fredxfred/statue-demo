@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* Theme selection - Import your desired theme */
+@import "statue-ssg/themes/black-white.css";
+
+/* Other built-in theme options:
+@import "statue-ssg/themes/red.css";
+@import "statue-ssg/themes/orange.css";
+@import "statue-ssg/themes/green.css";
+@import "statue-ssg/themes/purple.css";
+@import "statue-ssg/themes/cyan.css";
+@import "statue-ssg/themes/pink.css";
+*/
+
+/* Custom theme option:
+Create your own theme file (e.g., src/lib/themes/my-theme.css) and import it:
+@import "./themes/my-theme.css";
+
+Your custom theme should use Tailwind v4's @theme directive with CSS variables:
+@theme {
+  --color-background: #your-color;
+  --color-primary: #your-color;
+  ...
+}
+*/
+
+/* Tailwind v4 content config - scans src directory for classes */
+@source "../";
+@source "../../node_modules/statue-ssg/src/**/*.{svelte,js,ts}";
+
+/* Base element defaults using tokens */
+:root {
+  color-scheme: dark;
+}
+
+/* Optional utilities for smooth rendering */
+@layer utilities {
+  .bg-surface { background-color: var(--color-card); }
+  .glass-bg { background-color: color-mix(in srgb, var(--color-card) 78%, transparent); }
+  .glass-border { border-color: color-mix(in srgb, var(--color-border) 70%, transparent); }
+}
