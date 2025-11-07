@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julia Set Fractal Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #canvas {
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            cursor: crosshair;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            max-width: 90vw;
+            font-size: 14px;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 140px;
+        }
+
+        .wiggle-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .wiggle-title {
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        input[type="range"] {
+            width: 120px;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        input[type="text"] {
+            width: 100px;
+            padding: 6px 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-align: center;
+            font-size: 12px;
+            font-family: 'Arial', sans-serif;
+        }
+
+        input[type="text"]:focus {
+            border-color: #ff6b6b;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            cursor: pointer;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            min-height: 40px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .toggle-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .wiggle-btn {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            font-size: 11px;
+            padding: 6px 10px;
+            min-height: 32px;
+        }
+
+        .wiggle-btn.active {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .pan-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            align-items: center;
+        }
+
+        .pan-title {
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 6px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .pan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 120px;
+        }
+
+        .pan-btn {
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            background: rgba(255,255,255,0.2);
+            font-size: 16px;
+            padding: 8px;
+            min-height: 36px;
+            min-width: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            border-radius: 4px;
+        }
+
+        .pan-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .pan-btn:active {
+            background: rgba(255,255,255,0.4);
+            transform: scale(0.95);
+        }
+
+        .pan-center {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.5);
+            cursor: default;
+        }
+
+        .pan-sensitivity {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .info {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Julia Set Fractal Explorer</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    
+    <div class="controls">
+        <div class="control-row">
+            <div class="control-group">
+                <label>Real (c)</label>
+                <input type="range" id="realSlider" min="-2" max="2" step="0.01" value="-0.7">
+                <input type="text" id="realInput" value="-0.7">
+                <button id="realWiggleBtn" class="wiggle-btn">Wiggle</button>
+            </div>
+            
+            <div class="control-group">
+                <label>Imaginary (c)</label>
+                <input type="range" id="imagSlider" min="-2" max="2" step="0.01" value="0.27015">
+                <input type="text" id="imagInput" value="0.27015">
+                <button id="imagWiggleBtn" class="wiggle-btn">Wiggle</button>
+            </div>
+        </div>
+        
+        <div class="control-row">
+            <div class="control-group">
+                <label>Max Iterations</label>
+                <input type="range" id="iterSlider" min="50" max="500" step="10" value="400">
+                <input type="text" id="iterInput" value="400">
+                <button id="iterWiggleBtn" class="wiggle-btn">Wiggle</button>
+            </div>
+            
+            <div class="control-group">
+                <label>Zoom</label>
+                <input type="range" id="zoomSlider" min="0.5" max="5" step="0.1" value="1">
+                <input type="text" id="zoomInput" value="1">
+            </div>
+        </div>
+        
+        <div class="control-row">
+            <div class="control-group">
+                <label>Autozoom Rate</label>
+                <input type="range" id="autozoomRateSlider" min="0.005" max="0.05" step="0.005" value="0.02">
+                <input type="text" id="autozoomRateInput" value="0.02">
+            </div>
+        </div>
+        
+        <div class="button-row">
+            <button id="resetBtn">Reset</button>
+            <button id="randomBtn">Random</button>
+            <button id="autozoomBtn" class="toggle-btn">Auto Zoom</button>
+        </div>
+        
+        <div class="pan-controls">
+            <div class="pan-title">Panning Controls</div>
+            <div class="pan-grid">
+                <button class="pan-btn" id="panNW">↖</button>
+                <button class="pan-btn" id="panN">↑</button>
+                <button class="pan-btn" id="panNE">↗</button>
+                <button class="pan-btn" id="panW">←</button>
+                <div class="pan-center">⊙</div>
+                <button class="pan-btn" id="panE">→</button>
+                <button class="pan-btn" id="panSW">↙</button>
+                <button class="pan-btn" id="panS">↓</button>
+                <button class="pan-btn" id="panSE">↘</button>
+            </div>
+            <div class="pan-sensitivity">
+                <label style="font-size: 10px;">Pan Speed</label>
+                <input type="range" id="panSensitivitySlider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100px;">
+                <input type="text" id="panSensitivityInput" value="1.0" style="width: 60px; font-size: 10px;">
+            </div>
+        </div>
+
+        <div class="wiggle-controls">
+            <div class="wiggle-title">Wiggle Distribution Parameters</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Real Intensity</label>
+                    <input type="range" id="realIntensitySlider" min="0.0001" max="0.1" step="0.0001" value="0.0001">
+                    <input type="text" id="realIntensityInput" value="0.0001">
+                </div>
+                <div class="control-group">
+                    <label>Imag Intensity</label>
+                    <input type="range" id="imagIntensitySlider" min="0.0001" max="0.1" step="0.0001" value="0.0001">
+                    <input type="text" id="imagIntensityInput" value="0.0001">
+                </div>
+                <div class="control-group">
+                    <label>Iter Intensity</label>
+                    <input type="range" id="iterIntensitySlider" min="1" max="20" step="1" value="5">
+                    <input type="text" id="iterIntensityInput" value="5">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info">
+        Drag to pan • Double-click to center • Arrow keys to pan • Use controls to explore
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Fractal parameters
+        let cReal = -0.7;
+        let cImag = 0.27015;
+        let maxIterations = 400;
+        let zoom = 1;
+        let centerX = 0;
+        let centerY = 0;
+
+        // Autozoom parameters
+        let autoZoomEnabled = false;
+        let autoZoomSpeed = 0.02;
+        let animationId = null;
+
+        // Performance parameters
+        let lastFrameTime = 0;
+        let targetFPS = 30;
+        let frameInterval = 1000 / targetFPS;
+        
+        // Mobile detection for performance adjustments
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Panning parameters
+        let isPanning = false;
+        let lastPanX = 0;
+        let lastPanY = 0;
+        let panSensitivity = 1.0;
+
+        // Wiggle parameters
+        let wiggleStates = {
+            real: false,
+            imag: false,
+            iter: false
+        };
+        
+        let wiggleIntensity = {
+            real: 0.0001,
+            imag: 0.0001,
+            iter: 5
+        };
+
+        // Gaussian random number generator using Box-Muller transform
+        function gaussianRandom(mean = 0, stdDev = 1) {
+            let u = 0, v = 0;
+            while(u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+            while(v === 0) v = Math.random();
+            const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+            return z * stdDev + mean;
+        }
+
+        function applyWiggle() {
+            if (wiggleStates.real) {
+                const delta = gaussianRandom(0, wiggleIntensity.real);
+                cReal = Math.max(-2, Math.min(2, cReal + delta));
+            }
+            
+            if (wiggleStates.imag) {
+                const delta = gaussianRandom(0, wiggleIntensity.imag);
+                cImag = Math.max(-2, Math.min(2, cImag + delta));
+            }
+            
+            if (wiggleStates.iter) {
+                const delta = gaussianRandom(0, wiggleIntensity.iter);
+                maxIterations = Math.max(50, Math.min(500, Math.round(maxIterations + delta)));
+            }
+        }
+
+        function updateWiggleIntensity(parameter, value) {
+            wiggleIntensity[parameter] = value;
+        }
+
+        function panView(deltaX, deltaY) {
+            const panAmount = 0.1 / zoom * panSensitivity;
+            centerX += deltaX * panAmount;
+            centerY += deltaY * panAmount;
+            render();
+        }
+
+        function handlePanDirection(direction) {
+            const directions = {
+                'N': [0, -1], 'S': [0, 1], 'E': [1, 0], 'W': [-1, 0],
+                'NE': [1, -1], 'NW': [-1, -1], 'SE': [1, 1], 'SW': [-1, 1]
+            };
+            const [dx, dy] = directions[direction];
+            panView(dx, dy);
+        }
+
+        function toggleWiggle(parameter) {
+            wiggleStates[parameter] = !wiggleStates[parameter];
+            const btn = document.getElementById(parameter + 'WiggleBtn');
+            
+            if (wiggleStates[parameter]) {
+                btn.classList.add('active');
+                btn.textContent = 'Stop';
+                startAnimationLoop();
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Wiggle';
+                checkStopAnimation();
+            }
+        }
+
+        // Optimized color palette with more colors for smoother gradients
+        const colors = [];
+        const paletteSize = 512;
+        for (let i = 0; i < paletteSize; i++) {
+            const t = i / (paletteSize - 1);
+            // Enhanced color scheme with better contrast
+            colors.push([
+                Math.floor(255 * (0.5 + 0.5 * Math.cos(6.28 * (t * 2 + 0.0)))),
+                Math.floor(255 * (0.5 + 0.5 * Math.cos(6.28 * (t * 2 + 0.4)))),
+                Math.floor(255 * (0.5 + 0.5 * Math.cos(6.28 * (t * 2 + 0.8))))
+            ]);
+        }
+
+        function getAdaptiveIterations() {
+            // Reduce iterations at high zoom to maintain performance
+            // More aggressive reduction on mobile devices
+            const zoomFactor = Math.log10(Math.max(1, zoom));
+            const baseMultiplier = isMobile ? 0.3 : 0.2;
+            const iterationMultiplier = Math.max(0.2, 1 - (zoomFactor * baseMultiplier));
+            const result = Math.floor(maxIterations * iterationMultiplier);
+            const minIterations = isMobile ? 15 : 20;
+            return Math.max(minIterations, result);
+        }
+
+        function juliaSet(x, y) {
+            let zReal = x;
+            let zImag = y;
+            const adaptiveIterations = getAdaptiveIterations();
+            
+            for (let i = 0; i < adaptiveIterations; i++) {
+                const zReal2 = zReal * zReal;
+                const zImag2 = zImag * zImag;
+                
+                if (zReal2 + zImag2 > 4) {
+                    return i;
+                }
+                
+                const newZReal = zReal2 - zImag2 + cReal;
+                const newZImag = 2 * zReal * zImag + cImag;
+                
+                zReal = newZReal;
+                zImag = newZImag;
+            }
+            
+            return adaptiveIterations;
+        }
+
+        function render() {
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            const adaptiveIterations = getAdaptiveIterations();
+            
+            for (let px = 0; px < width; px++) {
+                for (let py = 0; py < height; py++) {
+                    // Convert pixel coordinates to complex plane
+                    const x = (px - width / 2) / (width / 4) / zoom + centerX;
+                    const y = (py - height / 2) / (height / 4) / zoom + centerY;
+                    
+                    const iterations = juliaSet(x, y);
+                    const index = (py * width + px) * 4;
+                    
+                    if (iterations >= adaptiveIterations) {
+                        // Point is in the set - color it black
+                        data[index] = 0;
+                        data[index + 1] = 0;
+                        data[index + 2] = 0;
+                    } else {
+                        // Point escaped - color based on iteration count
+                        const colorIndex = Math.floor(iterations * 4) % colors.length;
+                        const color = colors[colorIndex];
+                        data[index] = color[0];
+                        data[index + 1] = color[1];
+                        data[index + 2] = color[2];
+                    }
+                    data[index + 3] = 255; // Alpha
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function animationLoop(currentTime) {
+            const hasActiveAnimations = autoZoomEnabled || wiggleStates.real || wiggleStates.imag || wiggleStates.iter;
+            
+            if (!hasActiveAnimations) return;
+            
+            // Frame rate limiting
+            if (currentTime - lastFrameTime < frameInterval) {
+                animationId = requestAnimationFrame(animationLoop);
+                return;
+            }
+            
+            lastFrameTime = currentTime;
+            
+            // Apply autozoom if enabled
+            if (autoZoomEnabled) {
+                const speedMultiplier = isMobile ? 0.7 : 1.0; // Slower on mobile
+                const adaptiveSpeed = autoZoomSpeed * speedMultiplier * Math.max(0.3, 1 - Math.log10(zoom) * 0.15);
+                zoom *= (1 + adaptiveSpeed);
+                
+                // Limit zoom to prevent performance issues
+                if (zoom > 2000) {
+                    zoom = 2000;
+                }
+            }
+            
+            // Apply wiggle effects
+            applyWiggle();
+            
+            updateControls();
+            render();
+            animationId = requestAnimationFrame(animationLoop);
+        }
+
+        function toggleAutoZoom() {
+            autoZoomEnabled = !autoZoomEnabled;
+            const btn = document.getElementById('autozoomBtn');
+            
+            if (autoZoomEnabled) {
+                btn.classList.add('active');
+                btn.textContent = 'Stop Auto Zoom';
+                startAnimationLoop();
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Auto Zoom';
+                checkStopAnimation();
+            }
+        }
+
+        function startAnimationLoop() {
+            if (!animationId) {
+                lastFrameTime = performance.now();
+                animationId = requestAnimationFrame(animationLoop);
+            }
+        }
+
+        function checkStopAnimation() {
+            const hasActiveAnimations = autoZoomEnabled || wiggleStates.real || wiggleStates.imag || wiggleStates.iter;
+            if (!hasActiveAnimations && animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function updateControls() {
+            document.getElementById('realSlider').value = cReal;
+            document.getElementById('realInput').value = cReal.toFixed(4);
+            document.getElementById('imagSlider').value = cImag;
+            document.getElementById('imagInput').value = cImag.toFixed(4);
+            document.getElementById('iterSlider').value = maxIterations;
+            document.getElementById('iterInput').value = maxIterations;
+            document.getElementById('zoomSlider').value = Math.min(zoom, 5); // Clamp to slider max
+            document.getElementById('zoomInput').value = zoom.toFixed(2);
+            document.getElementById('autozoomRateSlider').value = autoZoomSpeed;
+            document.getElementById('autozoomRateInput').value = autoZoomSpeed.toFixed(3);
+            document.getElementById('panSensitivitySlider').value = panSensitivity;
+            document.getElementById('panSensitivityInput').value = panSensitivity.toFixed(1);
+            
+            // Update wiggle intensity displays - only update sliders if values are in range
+            const realSlider = document.getElementById('realIntensitySlider');
+            const imagSlider = document.getElementById('imagIntensitySlider');
+            const iterSlider = document.getElementById('iterIntensitySlider');
+            
+            if (wiggleIntensity.real >= parseFloat(realSlider.min) && wiggleIntensity.real <= parseFloat(realSlider.max)) {
+                realSlider.value = wiggleIntensity.real;
+            }
+            if (wiggleIntensity.imag >= parseFloat(imagSlider.min) && wiggleIntensity.imag <= parseFloat(imagSlider.max)) {
+                imagSlider.value = wiggleIntensity.imag;
+            }
+            if (wiggleIntensity.iter >= parseFloat(iterSlider.min) && wiggleIntensity.iter <= parseFloat(iterSlider.max)) {
+                iterSlider.value = wiggleIntensity.iter;
+            }
+            
+            // Always update text inputs to show actual values
+            document.getElementById('realIntensityInput').value = wiggleIntensity.real.toFixed(4);
+            document.getElementById('imagIntensityInput').value = wiggleIntensity.imag.toFixed(4);
+            document.getElementById('iterIntensityInput').value = wiggleIntensity.iter;
+        }
+
+        // Event listeners for controls
+        function setupControls() {
+            const realSlider = document.getElementById('realSlider');
+            const realInput = document.getElementById('realInput');
+            const imagSlider = document.getElementById('imagSlider');
+            const imagInput = document.getElementById('imagInput');
+            const iterSlider = document.getElementById('iterSlider');
+            const iterInput = document.getElementById('iterInput');
+            const zoomSlider = document.getElementById('zoomSlider');
+            const zoomInput = document.getElementById('zoomInput');
+
+            function syncControls(slider, input, callback, parameter = null) {
+                slider.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    input.value = parameter === 'iter' ? val : val.toFixed(4);
+                    callback(val);
+                });
+                
+                input.addEventListener('change', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                        slider.value = val;
+                        callback(val);
+                    }
+                });
+
+                input.addEventListener('blur', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                        input.value = parameter === 'iter' ? val : val.toFixed(4);
+                    }
+                });
+            }
+
+            syncControls(realSlider, realInput, (val) => {
+                if (wiggleStates.real) toggleWiggle('real');
+                cReal = Math.max(-2, Math.min(2, val));
+                render();
+            }, 'real');
+
+            syncControls(imagSlider, imagInput, (val) => {
+                if (wiggleStates.imag) toggleWiggle('imag');
+                cImag = Math.max(-2, Math.min(2, val));
+                render();
+            }, 'imag');
+
+            syncControls(iterSlider, iterInput, (val) => {
+                if (wiggleStates.iter) toggleWiggle('iter');
+                maxIterations = Math.max(50, Math.min(500, Math.round(val)));
+                render();
+            }, 'iter');
+
+            syncControls(zoomSlider, zoomInput, (val) => {
+                if (autoZoomEnabled) toggleAutoZoom();
+                zoom = Math.max(0.1, val);
+                render();
+            }, 'zoom');
+
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                if (autoZoomEnabled) toggleAutoZoom();
+                if (wiggleStates.real) toggleWiggle('real');
+                if (wiggleStates.imag) toggleWiggle('imag');
+                if (wiggleStates.iter) toggleWiggle('iter');
+                
+                cReal = -0.7;
+                cImag = 0.27015;
+                maxIterations = 400;
+                zoom = 1;
+                centerX = 0;
+                centerY = 0;
+                panSensitivity = 1.0;
+                updateControls();
+                render();
+            });
+
+            document.getElementById('randomBtn').addEventListener('click', () => {
+                cReal = (Math.random() - 0.5) * 4;
+                cImag = (Math.random() - 0.5) * 4;
+                updateControls();
+                render();
+            });
+
+            document.getElementById('autozoomBtn').addEventListener('click', toggleAutoZoom);
+            document.getElementById('realWiggleBtn').addEventListener('click', () => toggleWiggle('real'));
+            document.getElementById('imagWiggleBtn').addEventListener('click', () => toggleWiggle('imag'));
+            document.getElementById('iterWiggleBtn').addEventListener('click', () => toggleWiggle('iter'));
+
+            // Autozoom rate control
+            const autozoomRateSlider = document.getElementById('autozoomRateSlider');
+            const autozoomRateInput = document.getElementById('autozoomRateInput');
+            
+            syncControls(autozoomRateSlider, autozoomRateInput, (val) => {
+                autoZoomSpeed = val;
+            }, 'autozoom');
+
+            // Wiggle intensity controls
+            const realIntensitySlider = document.getElementById('realIntensitySlider');
+            const realIntensityInput = document.getElementById('realIntensityInput');
+            const imagIntensitySlider = document.getElementById('imagIntensitySlider');
+            const imagIntensityInput = document.getElementById('imagIntensityInput');
+            const iterIntensitySlider = document.getElementById('iterIntensitySlider');
+            const iterIntensityInput = document.getElementById('iterIntensityInput');
+
+            function syncIntensityControls(slider, input, parameter) {
+                slider.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    input.value = parameter === 'iter' ? val : val.toFixed(4);
+                    updateWiggleIntensity(parameter, val);
+                });
+                
+                input.addEventListener('change', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                        // Update slider only if value is within slider range
+                        const sliderMin = parseFloat(slider.min);
+                        const sliderMax = parseFloat(slider.max);
+                        if (val >= sliderMin && val <= sliderMax) {
+                            slider.value = val;
+                        }
+                        updateWiggleIntensity(parameter, val);
+                    }
+                });
+
+                // Remove blur validation that was overriding user input
+                input.addEventListener('focus', (e) => {
+                    e.target.select(); // Select all text for easy editing
+                });
+            }
+
+            syncIntensityControls(realIntensitySlider, realIntensityInput, 'real');
+            syncIntensityControls(imagIntensitySlider, imagIntensityInput, 'imag');
+            syncIntensityControls(iterIntensitySlider, iterIntensityInput, 'iter');
+
+            // Pan controls
+            const panSensitivitySlider = document.getElementById('panSensitivitySlider');
+            const panSensitivityInput = document.getElementById('panSensitivityInput');
+            
+            syncControls(panSensitivitySlider, panSensitivityInput, (val) => {
+                panSensitivity = val;
+            }, 'pan');
+
+            // Pan direction buttons
+            document.getElementById('panN').addEventListener('click', () => handlePanDirection('N'));
+            document.getElementById('panS').addEventListener('click', () => handlePanDirection('S'));
+            document.getElementById('panE').addEventListener('click', () => handlePanDirection('E'));
+            document.getElementById('panW').addEventListener('click', () => handlePanDirection('W'));
+            document.getElementById('panNE').addEventListener('click', () => handlePanDirection('NE'));
+            document.getElementById('panNW').addEventListener('click', () => handlePanDirection('NW'));
+            document.getElementById('panSE').addEventListener('click', () => handlePanDirection('SE'));
+            document.getElementById('panSW').addEventListener('click', () => handlePanDirection('SW'));
+
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement.tagName === 'INPUT') return; // Don't interfere with input fields
+                
+                switch(e.key) {
+                    case 'ArrowUp': case 'w': case 'W':
+                        handlePanDirection('N');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowDown': case 's': case 'S':
+                        handlePanDirection('S');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowLeft': case 'a': case 'A':
+                        handlePanDirection('W');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowRight': case 'd': case 'D':
+                        handlePanDirection('E');
+                        e.preventDefault();
+                        break;
+                }
+            });
+        }
+
+        // Canvas interaction handlers
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Left mouse button
+                isPanning = true;
+                lastPanX = e.clientX;
+                lastPanY = e.clientY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const deltaX = (e.clientX - lastPanX) / (width / 4) / zoom;
+                const deltaY = (e.clientY - lastPanY) / (height / 4) / zoom;
+                
+                centerX -= deltaX * panSensitivity;
+                centerY -= deltaY * panSensitivity;
+                
+                lastPanX = e.clientX;
+                lastPanY = e.clientY;
+                render();
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (isPanning) {
+                isPanning = false;
+                canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (isPanning) {
+                isPanning = false;
+                canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        // Touch support for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isPanning = true;
+                lastPanX = e.touches[0].clientX;
+                lastPanY = e.touches[0].clientY;
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (isPanning && e.touches.length === 1) {
+                const deltaX = (e.touches[0].clientX - lastPanX) / (width / 4) / zoom;
+                const deltaY = (e.touches[0].clientY - lastPanY) / (height / 4) / zoom;
+                
+                centerX -= deltaX * panSensitivity;
+                centerY -= deltaY * panSensitivity;
+                
+                lastPanX = e.touches[0].clientX;
+                lastPanY = e.touches[0].clientY;
+                render();
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isPanning = false;
+            }
+        });
+
+        // Double-click/tap to center
+        canvas.addEventListener('dblclick', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            
+            centerX = (px - width / 2) / (width / 4) / zoom + centerX;
+            centerY = (py - height / 2) / (height / 4) / zoom + centerY;
+            
+            render();
+        });
+
+        // Initialize
+        setupControls();
+        updateControls();
+        render();
+    </script>
+</body>
+</html>
